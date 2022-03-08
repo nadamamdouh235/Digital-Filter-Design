@@ -1,0 +1,931 @@
+<link rel="stylesheet" href="https://cdn.lineicons.com/2.0/LineIcons.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<script src="math.js" type="text/javascript"></script>
+<link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Hind+Vadodara:wght@300;500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="circle.css">
+<div class="container">
+    <div class="header">
+        <div class="header-logo">
+            <span class="site-title">All Pass Library</span>
+        </div>
+
+        <div class="header-search">
+            <button class="button-menu"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 385 385">
+          <path
+            d="M12 120.3h361a12 12 0 000-24H12a12 12 0 000 24zM373 180.5H12a12 12 0 000 24h361a12 12 0 000-24zM373 264.7H132.2a12 12 0 000 24H373a12 12 0 000-24z" />
+        </svg></button>
+
+        </div>
+    </div>
+    <div class="main">
+        <div class="sidebar">
+            <ul id="allpass_lib">
+                <li><label>a = </label><input type="text" id="NewAllPassValue"></li><button class="mybutton" onclick="addNew()" class="btn btn-primary">Add</button>
+                <li><a href="#" onclick="showZplaneForAllPass('2 + 2i')" ondblclick="addNewAllPass('2 + 2i')"><i
+              class="lni lni-text-format"></i><span>a = 2 + 2i</span></a>
+                    <input type="checkbox" onclick="addOrRemove(this, '2 + 2i')">
+                </li>
+                <li><a href="#" onclick="showZplaneForAllPass('2 - 2i')" ondblclick="addNewAllPass('2 - 2i')"><i
+              class="lni lni-text-format"></i><span>a = 2 - 2i</span></a>
+                    <input type="checkbox" onclick="addOrRemove(this, '2 - 2i')">
+                </li>
+                <li><a href="#" onclick="showZplaneForAllPass('1 + 2i')" ondblclick="addNewAllPass('1 + 2i')"><i
+              class="lni lni-text-format"></i><span>a = 1 + 2i</span></a>
+                    <input type="checkbox" onclick="addOrRemove(this, '1 + 2i')">
+                </li>
+                <li><a href="#" onclick="showZplaneForAllPass('2 + 1i')" ondblclick="addNewAllPass('2 + 1i')"><i
+              class="lni lni-text-format"></i><span>a = 2 + 1i</span></a>
+                    <input type="checkbox" onclick="addOrRemove(this, '2 + 1i')">
+                </li>
+            </ul>
+        </div>
+        <div style="display: flex;flex-direction: column;">
+
+            <div class="page-content">
+                <div>
+                    <h1>Design Filter</h1>
+                    <canvas id="zplane_polezero2" width=300 height=300></canvas>
+                    <div id="zeros"></div>
+                    <div id="poles"></div>
+                    <button class="mybutton" onclick="addNewPole()">Add a Pole</button>
+                    <button class="mybutton" onclick="addNewZero()">Add a Zero</button>
+                    <button class="mybutton" onclick="clearZeros()">clear zeros</button>
+                    <button class="mybutton" onclick="clearPoles()">clear poles</button>
+                    <button class="mybutton" onclick="clearAllPoints()">Clear All</button><br>
+
+                    <input type="checkbox" id="allPassEffect" onclick="setZplane(poles, zeros)" style="margin-left: 55px;">
+                    <label style="font-weight: 600;"> with all Pass filters</label>
+                    <p class="info"> Double click a point to remove it</p>
+                </div>
+                <div>
+                    <div>
+                        <label style="font-weight: 600;"> magnitude Response</label>
+                        <div id="mag_response" style="width:450px;height:225px;;"></div>
+                    </div>
+                    <div>
+                        <label style="font-weight: 600;"> Phase Response</label>
+                        <div id="phase_response" style="width:450px;height:225px;"></div>
+                    </div>
+                </div>
+                <div id="allpass">
+                    <div>
+                        <h1>Desing All Pass Filter</h1>
+                        <canvas id="allpass_zplane_polezero2" width=300 height=300></canvas>
+                    </div>
+                    <div>
+                        <label style="font-weight: 600;"> Phase Response</label>
+                        <div id="allpass_phase_response" style="width:450px;height:225px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <input id="csv" class="mybutton" type="file"><br>
+
+            </div>
+            <br>
+            <div>
+                <div id="mainSignalGraph" style="width:1000px"></div>
+            </div>
+
+            <div>
+                <div id="filtedSignalGraph" style="width:1000px"></div>
+                <div>
+                    <input type="range" min="1" max="100" class="slider" id="myRange">
+                    <label style="font-weight: 600;"> speed of filtering</label>
+                    <p><span id="demo"></span></p>
+                    <input type="button" class="mybutton" value="Apply filter" class="allpass_orginal" id="apply-filter">
+
+                </div>
+                <!-- <input type="button" value="Stop Real-Time Plot" class="allpass_orginal" id="stopSignals"> -->
+
+            </div>
+
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.2.0/papaparse.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-2.8.3.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="flotr2.min.js"></script>
+<script src="math.min.js"></script>
+<script src="layout.js" type="text/javascript"></script>
+<script>
+    // variables used to get mouse position on the canvas
+    var $canvas = $("#zplane_polezero2");
+    var $canvas2 = $("#allpass_zplane_polezero2");
+    var canvasOffset = $canvas.offset();
+    var offsetX = canvasOffset.left;
+    var offsetY = canvasOffset.top;
+    var scrollX = $canvas.scrollLeft();
+    var scrollY = $canvas.scrollTop();
+
+    // variables to save last mouse position
+    // used to see how far the user dragged the mouse
+    // and then move the text by that distance
+    var startX;
+    var startY;
+    var origin_of_unit_circle = [100, 100]
+    var zeros = new Array;
+    var poles = new Array;
+    var zerosNum = 0;
+    var polesNum = 0;
+    var allPassNum = 0;
+    var allPass = new Array;
+
+    // this var will hold the index of the selected point in zplane
+    var selectedPoint = -1;
+    var poleFlag = false;
+    var zeroFlag = true;
+    const allPassEffect = document.getElementById('allPassEffect');
+    var Z = new Array(100);
+    var freqAxis = new Array(100);
+
+    for (let i = 0; i < 100; i++) {
+        Z[i] = math.complex(math.cos(math.PI * (i / 100)), math.sin(math.PI * (i / 100)));
+        freqAxis[i] = Math.PI * (i / 100);
+    }
+
+    // for (a of aValues) {
+    //     menuOfAllPass = document.getElementById("allpass_lib");
+    //     var select = document.createElement('option');
+    //     select.setAttribute('value', a);
+    //     select.innerHTML = a;
+    //     menuOfAllPass.appendChild(select);
+
+    // }
+
+    function addNew() {
+        const target = document.getElementById('allpass_lib')
+        let input = document.getElementById('NewAllPassValue').value
+        target.innerHTML += "<li><a href=\"#\" onclick=\"showZplaneForAllPass('" + input + "')\" ondblclick=\"addNewAllPass('" + input + "')\"><i class=\"lni lni-text-format\" ></i><span>a = " + input + "</span></a>\
+          <input type=\"checkbox\" onclick=\"addOrRemove(this, '" + input + "')\"></li>";
+    }
+
+    function addNewAllPass(a) {
+        allPass.push(math.complex(a));
+        allPassNum = allPassNum + 1;
+        setZplane(poles, zeros);
+    }
+
+    function removeAllPassFilter(a) {
+        allPass = allPass.filter(function(value, index, arr) {
+            return !math.equal(value, math.complex(a));
+        });
+        allPassNum = allPassNum - 1;
+        setZplane(poles, zeros);
+    }
+
+    function addOrRemove(check_box, a) {
+        if (check_box.checked) {
+            addNewAllPass(a);
+        } else {
+            removeAllPassFilter(a);
+        }
+    }
+
+
+    function drawZero(x, y, ctx, radius, pad, zSize) {
+        ctx.beginPath();
+        ctx.arc(x + pad, y + pad, zSize, 0, 2 * Math.PI);
+        ctx.stroke();
+    }
+
+    function drawPole(x, y, ctx, pSize, pad) {
+        ctx.beginPath();
+        ctx.moveTo(x - pSize + pad, y - pSize + pad);
+        ctx.lineTo(x + pSize + pad, y + pSize + pad);
+        ctx.moveTo(x - pSize + pad, y + pSize + pad);
+        ctx.lineTo(x + pSize + pad, y - pSize + pad);
+        ctx.stroke();
+    }
+
+    function showZplaneForAllPass(a) {
+        if (a != '') {
+            let zero = math.divide(math.complex(1, 0), math.conj(math.complex(a)));
+            let pole = math.complex(a);
+            var radius = 50; // radius of unit circle
+            var pSize = 4; // size of pole and zero graphic
+            var zSize = 4;
+
+            var c = document.getElementById("allpass_zplane_polezero2");
+            var ctx = c.getContext("2d");
+
+            ctx.clearRect(0, 0, c.width, c.height);
+
+            var pad = (c.width - 2 * radius) / 2; // padding on each side
+
+            // unit circle
+            ctx.beginPath();
+            ctx.strokeStyle = "red";
+            ctx.arc(radius + pad, radius + pad, radius, 0, 2 * Math.PI);
+            ctx.stroke();
+
+            // y axis
+            ctx.beginPath();
+            //ctx.lineWidth="1";
+            ctx.strokeStyle = "lightgray";
+            ctx.moveTo(radius + pad, 0);
+            ctx.lineTo(radius + pad, c.height);
+            ctx.font = "italic 8px sans-serif";
+            ctx.fillText("Im", radius + pad + 2, pad - 2);
+
+            // x axis
+            ctx.moveTo(0, radius + pad);
+            ctx.lineTo(c.width, radius + pad);
+            ctx.fillText("Re", radius + radius + pad + 2, radius + pad - 2);
+            ctx.stroke(); // Draw it
+
+            // pole
+            ctx.strokeStyle = "blue";
+            let x = radius + Math.round(radius * pole.re);
+            let y = radius - Math.round(radius * pole.im);
+            drawPole(x, y, ctx, pSize, pad);
+
+            // zero
+            x = radius + Math.round(radius * zero.re);
+            y = radius - Math.round(radius * zero.im);
+            drawZero(x, y, ctx, radius, pad, zSize);
+
+            drawResponseOfAllPass(a);
+        }
+
+    }
+
+    function addNewPole() {
+        poleFlag = true;
+        points = document.getElementById("poles");
+        var div = document.createElement("div");
+        div.id = 'pole' + (polesNum - 1) + '_polezero2';
+        points.appendChild(div);
+        // poles.push([0, 0]);
+        // polesNum = polesNum + 1;
+        // setZplane(poles, zeros);
+        // console.log("poles = " + poles);
+    }
+
+    function addNewZero() {
+        zeroFlag = true;
+        points = document.getElementById("zeros");
+        var div = document.createElement('div');
+        div.id = 'zero' + (zerosNum - 1) + '_polezero2';
+        points.appendChild(div);
+        // zeros.push([0, 0]);
+        // zerosNum = zerosNum + 1;
+        // setZplane(poles, zeros);
+        // console.log("zeros = " + zeros);
+    }
+
+    function clearAllPoints() {
+        poles = [];
+        zeros = [];
+        polesNum = 0;
+        zerosNum = 0;
+        setZplane(poles, zeros);
+    }
+
+    function clearZeros() {
+        zeros = [];
+        zerosNum = 0;
+        setZplane(poles, zeros);
+    }
+
+    function clearPoles() {
+        poles = [];
+        polesNum = 0;
+        setZplane(poles, zeros);
+    }
+
+
+    // test if x,y is inside the bounding box of texts[textIndex]
+    function pointHittest(x, y, textIndex) {
+        // console.log([x, y]);
+        console.log("poles.length is " + poles.length);
+        if (textIndex >= polesNum) {
+            console.log("check some zero!");
+            return (x >= zeros[textIndex - polesNum][0] - 0.2 && x <= zeros[textIndex - polesNum][0] + 0.2 && y >= zeros[textIndex - polesNum][1] - 0.2 && y <= zeros[textIndex - polesNum][1] + 0.2);
+        }
+        if (textIndex < polesNum) {
+            console.log("check some pole!");
+            return (x >= poles[textIndex][0] - 0.05 && x <= poles[textIndex][0] + 0.05 && y >= poles[textIndex][1] - 0.05 && y <= poles[textIndex][1] + 0.05);
+        }
+    }
+
+    // handle mousedown events
+    // iterate through texts[] and see if the user
+    // mousedown'ed on one of them
+    // If yes, set the selectedText to the index of that text
+    function handleMouseDown(e) {
+        document.getElementById("zplane_polezero2").style.cursor = "pointer";
+        e.preventDefault();
+        startX = parseInt(e.clientX - offsetX);
+        startY = parseInt(e.clientY - offsetY);
+        console.log("you selected point [" + startX + ", " + startY + "]");
+        console.log("which is point [" + (startX - 150) / 100 + ", " + -(startY - 150) / 100 + "]");
+
+        // console.log("poles number is " + poles.length);
+        // console.log("zeros number is " + zeros.length);
+        totalLength = polesNum + zerosNum;
+        // totalLength = 1000;
+        // Put your mousedown stuff here
+        for (var i = 0; i < totalLength; i++) {
+            if (pointHittest((startX - 130) / 100, -(startY - 120) / 100, i)) {
+                selectedPoint = i;
+                if (i >= polesNum) {
+                    console.log("selected zero" + (i - polesNum));
+                } else if (i < polesNum) {
+                    console.log("selected pole" + (i));
+                }
+            }
+            // selectedPoint = i;
+            //     if(i >= polesNum){
+            //         console.log("selected zero" + (i - polesNum));
+            //     }else if(i < polesNum){
+            //         console.log("selected pole" + (i));
+            //     }
+
+        }
+    }
+
+    // handle mousemove events
+    // calc how far the mouse has been dragged since
+    // the last mousemove event and move the selected text
+    // by that distance
+    function handleMouseMove(e) {
+        //document.getElementById("zplane_polezero2").style.cursor = "pointer";
+        if (selectedPoint < 0) {
+            return;
+        }
+        console.log("Mouse is Moving!...");
+        e.preventDefault();
+        mouseX = parseInt(e.clientX - offsetX);
+        mouseY = parseInt(e.clientY - offsetY);
+
+        // Put your mousemove stuff here
+        var dx = (mouseX - startX) / 100;
+        var dy = -(mouseY - startY) / 100;
+        console.log("MouseXY -> [" + mouseX + ", " + mouseY + "]");
+        console.log("MouseXY -> [" + startX + ", " + startY + "]");
+        startX = mouseX;
+        startY = mouseY;
+        // console.log("moved to point [" + startX + ", " + startY + "]");
+        // console.log("which is point [" + (startX+70)/100 + ", " + -(startY-150)/100 + "]");  
+        // console.log("moved by [" + dx + ", " + dy + "]");  
+
+        if (selectedPoint >= poles.length) {
+            zeros[selectedPoint - poles.length][0] += dx;
+            zeros[selectedPoint - poles.length][1] += dy;
+        } else if (selectedPoint < poles.length) {
+            poles[selectedPoint][0] += dx;
+            poles[selectedPoint][1] += dy;
+        }
+        // addNewPole([dx, dy]);
+        setZplane(poles, zeros);
+    }
+
+    // done dragging
+    function handleMouseUp(e) {
+        document.getElementById("zplane_polezero2").style.cursor = "auto";
+        e.preventDefault();
+        selectedPoint = -1;
+    }
+
+    // also done dragging
+    function handleMouseOut(e) {
+        e.preventDefault();
+        selectedPoint = -1;
+    }
+
+    // clicked pole or zero -> delete it
+    function handleMouseDoubleClick(e) {
+        // e.preventDefault();
+        startX = parseInt(e.clientX - offsetX);
+        startY = parseInt(e.clientY - offsetY);
+        console.log("you selected point [" + startX + ", " + startY + "]");
+        console.log("which is point [" + (startX - 150) / 100 + ", " + -(startY - 150) / 100 + "]");
+
+        // console.log("poles number is " + poles.length);
+        // console.log("zeros number is " + zeros.length);
+        totalLength = polesNum + zerosNum;
+        // Put your mousedown stuff here
+        for (var i = 0; i < totalLength; i++) {
+            if (pointHittest((startX - 130) / 100, -(startY - 100) / 100, i)) {
+                if (i >= polesNum) {
+                    zeros.splice(i - polesNum, 1);
+                    zerosNum = zerosNum - 1;
+                    console.log("selected zero" + (i - polesNum));
+                } else if (i < polesNum) {
+                    poles.splice(i, 1);
+                    polesNum = polesNum - 1;
+                    console.log("selected pole" + (i));
+                }
+            }
+
+
+        }
+
+
+        setZplane(poles, zeros);
+    }
+
+    // function for adding new pole according to where we press
+    function handleMouseClick(e) {
+        mouseX = parseInt(e.clientX - offsetX);
+        mouseY = parseInt(e.clientY - offsetY);
+        console.log("entered!!")
+        console.log("x coord of point= ", (mouseX - 180) / 100);
+        console.log("y coord of point= ", -(mouseY - 220) / 100);
+        if (poleFlag) {
+            poles.push([(startX - 130) / 100, -(startY - 120) / 100]);
+            polesNum = polesNum + 1;
+            poleFlag = false;
+
+        } else if (zeroFlag) {
+            zeros.push([(startX - 130) / 100, -(startY - 120) / 100]);
+            zerosNum = zerosNum + 1;
+            zeroFlag = false;
+        }
+        setZplane(poles, zeros);
+    }
+
+
+    // listen for mouse events
+    $("#zplane_polezero2").mousedown(function(e) {
+        handleMouseDown(e);
+    });
+    $("#zplane_polezero2").mousemove(function(e) {
+        handleMouseMove(e);
+    });
+    $("#zplane_polezero2").mouseup(function(e) {
+        handleMouseUp(e);
+    });
+    $("#zplane_polezero2").mouseout(function(e) {
+        handleMouseOut(e);
+    });
+    $("#zplane_polezero2").dblclick(function(e) {
+        handleMouseDoubleClick(e);
+    });
+    $("#zplane_polezero2").click(function(e) {
+        handleMouseClick(e);
+    });
+
+
+    function setZplane(poles, zeros) {
+
+        console.log("drawing..");
+        console.log("poles number is " + poles.length);
+        console.log("zeros number is " + zeros.length);
+
+        var radius = 50; // radius of unit circle
+        var pSize = 4; // size of pole and zero graphic
+        var zSize = 4;
+
+        var c = document.getElementById("zplane_polezero2");
+        var ctx = c.getContext("2d");
+
+        ctx.clearRect(0, 0, c.width, c.height);
+
+        var pad = (c.width - 2 * radius) / 2; // padding on each side
+
+        // unit circle
+        ctx.beginPath();
+        ctx.strokeStyle = "black";
+        ctx.arc(radius + pad, radius + pad, radius, 0, 2 * Math.PI);
+        ctx.stroke();
+
+        // y axis
+        ctx.beginPath();
+        //ctx.lineWidth="1";
+        ctx.strokeStyle = "lightgray";
+        ctx.moveTo(radius + pad, 0);
+        ctx.lineTo(radius + pad, c.height);
+        ctx.font = "italic 8px sans-serif";
+        ctx.fillText("Im", radius + pad + 2, pad - 2);
+
+        // x axis
+        ctx.moveTo(0, radius + pad);
+        ctx.lineTo(c.width, radius + pad);
+        ctx.fillText("Re", radius + radius + pad + 2, radius + pad - 2);
+        ctx.stroke(); // Draw it
+
+        // poles
+        ctx.strokeStyle = "green";
+        var idx;
+        for (idx = 0; idx < poles.length; idx++) {
+            let x = radius + Math.round(radius * poles[idx][0]);
+            let y = radius - Math.round(radius * poles[idx][1]);
+            console.log("pole x coord = " + x)
+            console.log("pole y coord = " + y)
+            drawPole(x, y, ctx, pSize, pad);
+
+            if (y !== origin_of_unit_circle[1]) {
+                let x_conj = radius + Math.round(radius * poles[idx][0]);
+                let y_conj = radius + Math.round(radius * poles[idx][1]);
+                drawPole(x_conj, y_conj, ctx, pSize, pad);
+            }
+        }
+
+        // zeros
+        for (idx = 0; idx < zeros.length; idx++) {
+            let x = radius + Math.round(radius * zeros[idx][0]);
+            let y = radius - Math.round(radius * zeros[idx][1]);
+            console.log("pole x coord = " + x)
+            console.log("pole y coord = " + y)
+            console.log("radius + padding = " + (radius + pad))
+            drawZero(x, y, ctx, radius, pad, zSize);
+            if (y !== origin_of_unit_circle[1]) {
+                let x_conj = radius + Math.round(radius * zeros[idx][0]);
+                let y_conj = radius + Math.round(radius * zeros[idx][1]);
+                drawZero(x_conj, y_conj, ctx, radius, pad, zSize);
+            }
+
+        }
+        if (allPassEffect.checked) {
+            // allpass poles
+            for (pole_index = 0; pole_index < allPass.length; pole_index++) {
+                let x = radius + Math.round(radius * allPass[pole_index].re);
+                let y = radius - Math.round(radius * allPass[pole_index].im);
+                drawPole(x, y, ctx, pSize, pad);
+            }
+
+            // allpass zeros
+            for (zero_index = 0; zero_index < allPass.length; zero_index++) {
+                let tempVar = math.divide(1, math.conj(allPass[zero_index]));
+                let x = radius + Math.round(radius * tempVar.re);
+                let y = radius - Math.round(radius * tempVar.im);
+                drawZero(x, y, ctx, radius, pad, zSize);
+            }
+        }
+        drawResponses();
+        console.log("The poles coord = ", poles);
+        console.log("The zeros coords = ", zeros);
+    }
+
+
+
+
+    function drawResponses() {
+        let magResponse = [];
+        let phaseResponse = [];
+        for (let i = 0; i < 100; i++) {
+            let magPoint = math.complex(1, 0);
+            let phasePoint = math.complex(1, 0);
+            for (let j = 0; j < zeros.length; j++) {
+                let point = math.complex(zeros[j][0], zeros[j][1])
+                let [conjugate, conjugate_mag, conjugate_phase] = CalculateConjugatesDifferences(point, i);
+                let temp_normal = math.subtract(Z[i], point);
+                let temp = conjugate_mag * temp_normal.abs();
+                let phase_temp = temp_normal.arg() + conjugate_phase;
+                magPoint *= temp;
+                phasePoint *= phase_temp;
+            }
+            for (let j = 0; j < poles.length; j++) {
+                let point = math.complex(poles[j][0], poles[j][1])
+                let [conjugate, conjugate_mag, conjugate_phase] = CalculateConjugatesDifferences(point, i);
+                let temp = conjugate_mag * math.subtract(Z[i], point).abs()
+                let phase_temp = math.subtract(Z[i], point).arg() + conjugate_phase
+                magPoint /= temp;
+                phasePoint /= phase_temp;
+            }
+            if (allPassEffect.checked) {
+                for (let j = 0; j < allPass.length; j++) {
+                    let temp = math.subtract(Z[i], math.divide(1, math.conj(allPass[j])));
+                    magPoint *= temp.abs();
+                    phasePoint *= temp.arg();
+                    temp = math.subtract(Z[i], allPass[j]);
+                    magPoint /= temp.abs();
+                    phasePoint /= temp.arg();
+                }
+            }
+            magResponse.push(magPoint);
+            phaseResponse.push(phasePoint);
+        }
+        let magData = [];
+        let phaseData = [];
+        normalize(magResponse, phaseResponse, magData, phaseData);
+
+
+
+        // plot mag_response
+        var container = document.getElementById('mag_response');
+        graph = Flotr.draw(container, [magData], {
+            yaxis: {
+                max: 1,
+                min: 0
+            }
+        });
+        // plot phase_response
+        var container = document.getElementById('phase_response');
+        graph = Flotr.draw(container, [phaseData], {
+            yaxis: {
+                max: 1,
+                min: -1
+            }
+        });
+    }
+
+
+
+
+
+    function normalize(magResponse, phaseResponse, magData, phaseData) {
+        var maxMag = Math.max(...magResponse);
+        var maxPhase = Math.max(...phaseResponse);
+        for (let i = 0; i < magResponse.length; i++) {
+            magResponse[i] /= maxMag;
+            phaseResponse[i] /= maxPhase;
+        }
+        for (let i = 0; i < 100; i++) {
+            magData.push([freqAxis[i], magResponse[i]]);
+            // console.log(magResponse[i]);
+            phaseData.push([freqAxis[i], phaseResponse[i]]);
+            // console.log(phaseResponse[i]);
+        }
+    }
+
+    function drawResponseOfAllPass(a) {
+        let zero = math.divide(1, math.conj(math.complex(a)));
+        let pole = math.complex(a);
+        let magResponse = [];
+        let phaseResponse = [];
+        for (let i = 0; i < 100; i++) {
+            let magPoint = math.complex(1, 0);
+            let phasePoint = math.complex(1, 0);
+            let temp = math.subtract(Z[i], math.complex(zero.re, zero.im));
+            magPoint *= temp.abs();
+            phasePoint *= temp.arg();
+            temp = math.subtract(Z[i], math.complex(pole.re, pole.im));
+            magPoint /= temp.abs();
+            phasePoint /= temp.arg();
+
+            magResponse.push(magPoint);
+            phaseResponse.push(phasePoint);
+        }
+        let magData = [];
+        let phaseData = [];
+        normalize(magResponse, phaseResponse, magData, phaseData);
+
+        // plot phase_response
+        var container = document.getElementById('allpass_phase_response');
+        graph = Flotr.draw(container, [phaseData], {
+            yaxis: {
+                max: 1,
+                min: -1
+            }
+        });
+    }
+
+
+    function CalculateConjugatesDifferences(point, i) {
+        let point_conjugate = math.conj(point)
+        let point_temp_conjugate = math.subtract(Z[i], point_conjugate);
+        return [point_conjugate, point_temp_conjugate.abs(), point_temp_conjugate.arg()];
+
+    }
+
+
+
+    // ################################################### GRAPH ################################
+
+
+
+
+    var fileInput = document.getElementById("csv"),
+
+        readFile = function() {
+            document.getElementById("apply-filter").style.display = "block";
+            document.getElementById("myRange").style.display = "block";
+
+            var reader = new FileReader();
+            reader.onload = function() {
+                    const data = reader.result;
+                    const elem = data.split(',')
+
+                    const allData = elem[2].split(/\r?\n/);
+                    //console.log(allData)
+
+                    console.log("lennn " + elem.length)
+
+                    const elemData = []
+                    for (let i = 1; i < elem.length - 1; i++) { //1000
+                        elemData[i - 1] = elem[i].split(/\r?\n/);
+                    }
+
+                    let x = []
+                    let y = []
+                    x[0] = elem[0]
+                    y[0] = elemData[0][0]
+                    for (let i = 1; i < elemData.length; i++) {
+                        y[i] = elemData[i][0];
+                        x[i] = elemData[i - 1][1];
+                    }
+                    //console.log(x)
+                    x_data = []
+                    y_data = []
+                    for (let i = 0; i <= elemData.length; i++) {
+                        x_data[i] = parseFloat(x[i]);
+                        y_data[i] = parseFloat(y[i]);
+                    }
+                }
+                // start reading the file. When it is done, calls the onload event defined above.
+            reader.readAsBinaryString(fileInput.files[0]);
+
+
+            //fn to get the coeffs of the expansion
+            function multiply(zeta, z) {
+                var result = [];
+                zeta.forEach(function(a, i) {
+                    z.forEach(function(b, j) {
+                        result[i + j] = (result[i + j] || 0) + a * b; //to multiply complex numbers
+                    });
+                });
+                console.log(result)
+                return result
+            }
+
+            function Transfer_Fn_coefficients(poles_or_zeros) {
+
+                var coefficients = []
+                for (let index = 0; index < poles_or_zeros.length; index++) {
+                    var pole_or_zero_unit = math.complex(-poles_or_zeros[index][0], -poles_or_zeros[index][1])
+                    console.log("uuuuPP " + pole_or_zero_unit)
+                    var p_or_z = -(math.multiply(pole_or_zero_unit, math.conj(pole_or_zero_unit)))
+                    console.log("ppppReal " + p_or_z)
+                    coefficients[index] = [p_or_z, 1];
+                    console.log("ddddddddd " + coefficients[index])
+                }
+                poles_or_zeros_coeff = coefficients.reduce(multiply).reverse()
+
+                return poles_or_zeros_coeff
+            }
+
+            function real_time_graph(real_time_y_filter) {
+                Plotly.newPlot('filtedSignalGraph', [{
+                    y: [real_time_y_filter[0]],
+                    type: 'line',
+                    line: {
+                        color: 'rgba(50, 171, 96, 1)'
+                    }
+                }]);
+                Plotly.newPlot('mainSignalGraph', [{
+                    y: [y_data[0]],
+                    type: 'line'
+                }]);
+
+            }
+
+            function plot_real_time(cnt, real_time_y_filter, speed) {
+
+                var graphInterval = setInterval(function() {
+
+                    Plotly.extendTraces('filtedSignalGraph', {
+                        y: [
+                            [real_time_y_filter[cnt]]
+                        ]
+                    }, [0]);
+
+                    Plotly.relayout('filtedSignalGraph', {
+                        xaxis: {
+                            range: [cnt, cnt - 100]
+                        },
+                        yaxis: {
+                            range: [-20, 20]
+                        },
+                        title: 'Filtered Signal',
+                    });
+
+                    var update = {
+                        y: [
+                            [y_data[cnt]]
+                        ]
+                    }
+
+                    Plotly.extendTraces('mainSignalGraph', update, [0])
+
+                    Plotly.relayout('mainSignalGraph', {
+                        xaxis: {
+                            range: [cnt, cnt - 100]
+                        },
+                        yaxis: {
+                            range: [-20, 20]
+                        },
+                        title: "Main Signal",
+                        color: 'rgb(5, 21, 231)',
+                    });
+
+                }, speed * 2);
+
+
+            }
+
+
+            //difference equation
+            function Difference_Equation(zeors_coeff, poles_coeff) {
+
+                let y_filter = [zeors_coeff[0] * y_data[0]];
+                let y_filter_term;
+                let y_a = [0]
+                let y_b = [0]
+                for (let k = 1; k < y_data.length - 1; k++) {
+                    y_a[k] = 0
+                    if (zeors_coeff.length > 0) {
+                        for (let j = 0; j < zeors_coeff.length; j++) {
+                            if ((k - j) >= 0) {
+                                y_a[k] += (zeors_coeff[j] * y_data[k - j]);
+                            }
+                        }
+                        console.log("y_aFinal " + y_a[k])
+                    }
+                    y_b[k] = 0
+                    if (poles_coeff.length > 0) {
+                        for (let i = 1; i < poles_coeff.length; i++) {
+                            if (k - i >= 0) {
+                                y_b[k] += (poles_coeff[i] * y_filter[k - i]);
+                                console.log("y data index = " + (k - i))
+                                console.log("y: " + y_filter[k - i])
+                                console.log("p_Coeff" + poles_coeff[i])
+                                console.log("yb: " + y_b[k])
+                            }
+                        }
+                        console.log("ybFinal " + y_b[k])
+                    }
+                    y_filter_term = y_a[k] - y_b[k]
+                    console.log("y_filter_term: " + y_filter_term)
+                    y_filter.push(y_filter_term);
+                    plot_real_time(k, y_filter, speedOfSignal)
+                    console.log("y-filter " + y_filter[k])
+                }
+            }
+
+
+
+
+            var phase_corr_flag = false
+            var digital_filter_flag = false
+
+            //filtered signal progress slider
+            var slider = document.getElementById("myRange");
+            var speedOfSignal = slider.value;
+            var sliderSpeedOutput = document.getElementById("demo")
+            sliderSpeedOutput.innerHTML = slider.value
+
+            //fn to control the speed of the real-time signal
+            slider.oninput = function() {
+                speedOfSignal = this.value;
+                sliderSpeedOutput.innerHTML = this.value
+
+
+            }
+
+            function apply_digital_filter() {
+                if (poles.length > 0 && zeros.length > 0) {
+                    var poles_coeff = Transfer_Fn_coefficients(poles);
+                    var zeors_coeff = Transfer_Fn_coefficients(zeros)
+                } else {
+                    if (poles.length == 0) {
+                        var poles_coeff = [1, 0]
+                        var zeors_coeff = Transfer_Fn_coefficients(zeros)
+
+                    }
+                    if (zeros.length == 0) {
+                        var zeors_coeff = [1, 0]
+                        var poles_coeff = Transfer_Fn_coefficients(poles)
+                        console.log("one pole")
+                        console.log("length" + poles_coeff.length)
+                    }
+                }
+                let y_filter = [zeors_coeff[0] * y_data[0]];
+                real_time_graph(y_filter);
+                Difference_Equation(zeors_coeff, poles_coeff)
+                console.log("zeros: " + zeors_coeff)
+                console.log("poles: " + poles_coeff)
+            }
+
+            document.getElementById("apply-filter").onclick = function() {
+                digital_filter_flag = true;
+                apply_digital_filter();
+            }
+
+        };
+
+
+
+    setZplane(poles, zeros);
+
+
+    let stop_signals = false;
+    fileInput.addEventListener('change', readFile);
+
+
+    // ###################################################### GRAPH END ##################################################
+
+    setZplane(poles, zeros);
+
+
+
+    fileInput.addEventListener('change', readFile);
+</script>
